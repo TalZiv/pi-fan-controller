@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import time
-
+from datetime import datetime
 from gpiozero import OutputDevice
 
 
@@ -28,6 +28,11 @@ def get_temp():
         raise RuntimeError('Could not parse temperature output.') from e
 
 if __name__ == '__main__':
+    LOG_FILE=r'/tmp/fancontrol.log'
+    f = open(LOG_FILE, "a")
+    TIME_SAMPLE = (datetime.now()).strftime("%d-%m-%Y - %H:%M:%S")
+    f.write(f"{TIME_SAMPLE} Starting fan control!\n")
+    f.close()
     # Validate the on and off thresholds
     if OFF_THRESHOLD >= ON_THRESHOLD:
         raise RuntimeError('OFF_THRESHOLD must be less than ON_THRESHOLD')
@@ -36,16 +41,24 @@ if __name__ == '__main__':
 
     while True:
         temp = get_temp()
-
         # Start the fan if the temperature has reached the limit and the fan
         # isn't already running.
         # NOTE: `fan.value` returns 1 for "on" and 0 for "off"
         if temp > ON_THRESHOLD and not fan.value:
             fan.on()
+            f = open(LOG_FILE, "a")
+            TIME_SAMPLE = (datetime.now()).strftime("%d-%m-%Y - %H:%M:%S")
+            f.write(f"{TIME_SAMPLE} Turning ON temp is {temp}\n")
+            f.close()
+
 
         # Stop the fan if the fan is running and the temperature has dropped
         # to 10 degrees below the limit.
         elif fan.value and temp < OFF_THRESHOLD:
             fan.off()
+            f = open(LOG_FILE, "a")
+            TIME_SAMPLE = (datetime.now()).strftime("%d-%m-%Y - %H:%M:%S")
+            f.write(f"{TIME_SAMPLE} Turning OFF temp is {temp}\n")
+            f.close()
 
         time.sleep(SLEEP_INTERVAL)
